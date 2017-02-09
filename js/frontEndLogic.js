@@ -1,14 +1,21 @@
 // JavaScript Document
 
-var processedDictionary = [];
+
+var dictionary = [];
 $.get('txt/sorted2.txt', function(data) {
-  "use strict";
-  var rawDictionary = data.split("\n");
-  processedDictionary = rawDictionary.map(function(obj){
-	  return new scrabbleWord(obj);
-  });
-  console.log("Dictionary Processed");
+	 "use strict";
+	 var rawDictionary = data.split("\n");
+	 dictionary = rawDictionary.map(function(obj){
+	     return new ScrabbleWord(obj);
+	 });
+	 console.log("Dictionary Processed");
 }, 'text');
+
+// var dictionary;
+// $.getJSON('txt/dictionary.json', function(json) {
+//     dictionary = json;
+//     console.log("Dictionary Loaded");
+// });
 
 var scoreMap = {
 	"a" : 1,
@@ -39,75 +46,51 @@ var scoreMap = {
 	"z" : 10
 };
 
-function scrabbleWord(letters) {
+function ScrabbleWord(letters) {
 	"use strict";
 	this.letters = letters.trim();
-	this.returnLetters = function(){
-			console.log(this.letters);
-	};
-	
-	this.canBeSpelled = function(comparison){
-		
-		// Build Unique Letter Array
-		var uniqueLetterArray = [];
-		var uniqueLetters = "";
-		for (var i = 0; i < this.letters.length; i++){
+    this.wordSize = this.letters.length;
+    this.wordScore = 0;
+    this.uniqueLetterMap = {};
+    this.uniqueLetters = "";
+    this.mapLetters = function(){
+        // Build Unique Letter Array
+		for (var i = 0; i < this.wordSize; i++){
 			var currentLetter = this.letters[i];
-			if (typeof uniqueLetterArray[currentLetter] !== 'undefined') {
-				uniqueLetterArray[currentLetter]++;
+            this.wordScore += scoreMap[currentLetter];
+			if (typeof this.uniqueLetterMap[currentLetter] !== 'undefined') {
+				this.uniqueLetterMap[currentLetter]++;
 			} else {
-				uniqueLetterArray[currentLetter] = 1;
-				uniqueLetters += currentLetter;
+				this.uniqueLetterMap[currentLetter] = 1;
+				this.uniqueLetters += currentLetter;
 			}
 		}
-		
-		// Iterate comparison characters
-		for (var i = 0; i < comparison.length; i++){
-			var currentLetter = comparison[i];
-			if (typeof uniqueLetterArray[currentLetter] !== 'undefined' && uniqueLetterArray[currentLetter] !== 0) {
-				uniqueLetterArray[currentLetter]--;
-			} 
-		}
-		
-		var lettersNeeded = 0;
-		for (var i = 0; i < uniqueLetters.length; i++){
-			var currentLetter = uniqueLetters[i];
-			lettersNeeded += uniqueLetterArray[currentLetter];
-		}
-		
-		if (lettersNeeded <= 0){
-//			console.log("comparing " + comparison + " and " + this.letters);
-//			console.log("Returning true");
-			return true;
-		} else {
-//			console.log("comparing " + comparison + " and " + this.letters);
-//			console.log("Returning false");
-			return false;
-		}
-	};
-	
-	this.getScore = function(){
-		var score = 0;
-		for (var i = 0; i < this.letters.length; i++){
-			var currentLetter = this.letters[i];
-			score += scoreMap[currentLetter];
-		}
-		return score;
-	};
+    }
+    this.mapLetters();
 }
 
- var bestWordFinder = function(userInput){
+var canBeSpelled = function(dictionaryObject, comparisonObject){
+    var dictionaryMap = dictionaryObject.uniqueLetterMap;
+    var comparisonMap = comparisonObject.uniqueLetterMap;
+    for (var currentLetter in dictionaryMap){
+    	if (typeof comparisonMap[currentLetter] === 'undefined' ||  dictionaryMap[currentLetter] > comparisonMap[currentLetter]) {
+        	return false;
+        }
+	}
+	return true;
+};
+
+ var bestWordFinder = function(inputObject){
 	"use strict";
 	var bestWord = "",
 		bestScore = 0;
-	for (var i = 0; i < processedDictionary.length; i++){
-		if(processedDictionary[i].letters.length <= userInput.length){
-			if(processedDictionary[i].canBeSpelled(userInput)){
-//				console.log(processedDictionary[i].letters + " can be spelled");
-				var wordScore = processedDictionary[i].getScore();
-				if(wordScore > bestScore){
-					bestWord = processedDictionary[i];
-					bestScore = wordScore;
+	for (var i = 0; i < dictionary.length; i++){
+		if(dictionary[i].wordSize <= inputObject.wordSize){
+			if(canBeSpelled(dictionary[i], inputObject)){
+				var currentWordScore = dictionary[i].wordScore;
+				if(currentWordScore > bestScore){
+					bestWord = dictionary[i];
+					bestScore = currentWordScore;
 				}
 			}
 		} else {
@@ -116,37 +99,58 @@ function scrabbleWord(letters) {
 		}
 	}
 	if (bestWord !== ""){
-		return bestWord.letters;
+		return bestWord.letters.toUpperCase();
 	} else {
 		return null;
 	}
 	 
  };
 
-var responseBlock = $("#responseBlock");
+var inputObject,
+	$responseBlock = $("#responseBlock");
 $("#letters").on('input', function(){
 	"use strict";
-	var userInput = $("#letters").val();
-	if(userInput.length < 15){
-		var t0 = performance.now();
-		var bestWord = bestWordFinder(userInput);
-		var t1 = performance.now();
-		console.log("Finding the word took " + (t1 - t0) + " milliseconds.");
-		var tileBuilder = "";
-			if(bestWord !== null){
-				for(var i = 0; i < bestWord.length; i++){
-					var currentLetter = bestWord[i];
-					tileBuilder +=
-					"<div class='scrabbleTile'>" +
-					"<p class='tileLetter'>" +
-					currentLetter + 
-					"</p><p class='tileScore'>" +
-					scoreMap[currentLetter] +
-					"</p></div>";
-				}
-				responseBlock.html(tileBuilder);
-			} else {
-				responseBlock.html("<h2>No words yet</h2>");
-			}
-	}
+        var userInput = $("#letters").val();
+        inputObject = new ScrabbleWord(userInput);
+        if(userInput.length < 15){
+            var t0 = performance.now();
+            var bestWord = bestWordFinder(inputObject);
+            console.log("Best word is " + bestWord);
+            var t1 = performance.now();
+            console.log("Finding the word took " + (t1 - t0) + " milliseconds.");
+            var tileBuilder = "";
+                if(bestWord !== null){
+                    for(var i = 0; i < bestWord.length; i++){
+                        var currentLetter = bestWord[i];
+                        tileBuilder +=
+                        "<div class='scrabbleTile'>" +
+                        "<p class='tileLetter'>" +
+                        currentLetter + 
+                        "</p><p class='tileScore'>" +
+                        scoreMap[currentLetter.toLowerCase()] +
+                        "</p></div>";
+                    }
+                    $responseBlock.html(tileBuilder);
+                } else {
+                    $responseBlock.html("<h2>No words yet</h2>");
+                }
+        }   
 });
+
+function testEfficiency(){
+    var t0 = performance.now();
+    var inputObject = new ScrabbleWord("aeoiuodopoieoi");
+    inputObject.mapLetters();
+    var bestWord = bestWordFinder(inputObject);
+    var t1 = performance.now();
+    var duration = t1 - t0;
+    var lowBenchMark = 120;
+    var highBenchMark = 150;
+    console.log("Finding the word took " + duration + " milliseconds.");
+    if(duration < lowBenchMark){console.log("Efficiency has improved");}
+    else if(duration >= lowBenchMark && duration <= highBenchMark){
+        console.log("Efficiency is the same");
+    } else {
+        console.log("Efficiency is worse");
+    }
+}

@@ -15151,7 +15151,6 @@ hazer
 hazes
 hazle
 hdqrs
-"he""ll"
 heads
 heady
 heald
@@ -15759,7 +15758,6 @@ issei
 issue
 isthm
 istle
-"it""ll"
 italy
 itchy
 itcze
@@ -35192,7 +35190,6 @@ hailed
 hailer
 hailes
 hailse
-"hain""t"
 hainch
 hained
 hairdo
