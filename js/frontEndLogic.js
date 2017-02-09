@@ -1,21 +1,17 @@
 // JavaScript Document
-
-
+var dictionaryWorker;
 var dictionary = [];
-$.get('txt/sorted2.txt', function(data) {
-	 "use strict";
-	 var rawDictionary = data.split("\n");
-	 dictionary = rawDictionary.map(function(obj){
-	     return new ScrabbleWord(obj);
-	 });
-	 console.log("Dictionary Processed");
-}, 'text');
-
-// var dictionary;
-// $.getJSON('txt/dictionary.json', function(json) {
-//     dictionary = json;
-//     console.log("Dictionary Loaded");
-// });
+if (typeof(Worker) !== "undefined") {
+    dictionaryWorker = new Worker("js/dictionaryImport.js");
+    dictionaryWorker.postMessage('');
+    dictionaryWorker.onmessage = function(event){
+    	dictionary = JSON.parse(event.data);
+    	$('#loaderScreen').fadeOut();
+    };
+} else {
+	console.log("No Worker support");
+    // Sorry! No Web Worker support..
+};
 
 var scoreMap = {
 	"a" : 1,
