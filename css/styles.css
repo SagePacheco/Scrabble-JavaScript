@@ -56,6 +56,7 @@ input{
 	font-size:30px;
 	border:thin white solid;
 	text-align:center;
+    text-transform: uppercase;
 }
 input::-ms-clear {
     display: none;
