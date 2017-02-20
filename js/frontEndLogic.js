@@ -67,7 +67,7 @@ $.get('txt/sorted2.txt', function(data) {
 
 $("#letters").on('input', function(){
 	"use strict";
-    var userInput = $("#letters").val();
+    var userInput = $("#letters").val().toLowerCase();
     inputObject = new ScrabbleWord(userInput);
     if(userInput.length < 15){
         bestWordWorker(inputObject);
